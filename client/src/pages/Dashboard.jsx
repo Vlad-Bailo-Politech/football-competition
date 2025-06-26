@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import CreateTournament from "../components/CreateTournament";
+import CreateMatch from "../components/CreateMatch";
 
 export default function Dashboard() {
     const [user, setUser] = useState(null);
@@ -39,6 +40,10 @@ export default function Dashboard() {
 
             {user.role === "organizer" && (
                 <CreateTournament onCreated={handleCreated} />
+            )}
+
+            {user.role === "organizer" && (
+                <CreateMatch />
             )}
 
             <h4 style={{ marginTop: 30 }}>Список турнірів:</h4>
