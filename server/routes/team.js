@@ -77,13 +77,18 @@ router.get("/:id", optionalAuth, async (req, res) => {
 // Створення команди (тільки тренер)
 router.post("/", auth, requireRole("coach"), async (req, res) => {
   try {
+    console.log('User ID:', req.user.id); // Додай
+    console.log('Request body:', req.body); // Додай
+
     const team = new Team({ ...req.body, coach: req.user.id });
     await team.save();
     res.status(201).json(team);
   } catch (err) {
+    console.error('Error creating team:', err); // Додай
     res.status(500).json({ message: "Error creating team" });
   }
 });
+
 
 // Додавання гравця (тільки тренер)
 router.put("/:id/add-player", auth, requireRole("coach"), async (req, res) => {
