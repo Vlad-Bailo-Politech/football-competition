@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 
 export default function TeamPage() {
@@ -37,7 +38,9 @@ export default function TeamPage() {
             ) : (
                 <ul>
                     {team.players.map(player => (
-                        <li key={player._id}>{player.name} ({player.email})</li>
+                        <li key={player._id}>
+                            <Link to={`/players/${player._id}`}>{player.name}</Link>
+                        </li>
                     ))}
                 </ul>
             )}

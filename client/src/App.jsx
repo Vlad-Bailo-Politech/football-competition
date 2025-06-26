@@ -6,6 +6,7 @@ import CoachDashboard from "./pages/CoachDashboard";
 import Matches from "./pages/Matches";
 import Standings from "./pages/Standings";
 import TeamPage from "./pages/TeamPage";
+import PlayerPage from "./pages/PlayerPage";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/matches" element={<Matches />} />
         <Route path="/standings" element={<Standings />} />
         <Route path="/teams/:id" element={<TeamPage />} />
+        <Route path="/players/:id" element={<PlayerPage />} />
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </Router>
