@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import CoachDashboard from "./pages/CoachDashboard";
 import Matches from "./pages/Matches";
+import Standings from "./pages/Standings";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/coach" element={<CoachDashboard />} />
         <Route path="/matches" element={<Matches />} />
+        <Route path="/standings" element={<Standings />} />
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </Router>
