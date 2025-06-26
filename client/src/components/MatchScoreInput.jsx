@@ -13,7 +13,7 @@ export default function MatchScoreInput({ match, onUpdated }) {
                 scoreA,
                 scoreB
             }, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: getAuthHeaders()
             });
             alert("Результат оновлено");
             if (onUpdated) onUpdated();

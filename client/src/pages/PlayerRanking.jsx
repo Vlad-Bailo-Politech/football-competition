@@ -12,7 +12,7 @@ export default function PlayerRanking() {
   const fetchRanking = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/players/ranking", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: getAuthHeaders()
       });
       setRanking(res.data);
     } catch (err) {

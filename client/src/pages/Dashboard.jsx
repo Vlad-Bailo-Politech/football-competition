@@ -19,7 +19,7 @@ export default function Dashboard() {
     const fetchTournaments = async (token) => {
         try {
             const res = await axios.get("http://localhost:5000/api/tournaments", {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: getAuthHeaders()
             });
             setTournaments(res.data);
         } catch (err) {

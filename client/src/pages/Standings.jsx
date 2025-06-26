@@ -22,14 +22,14 @@ export default function Standings() {
 
     const fetchTournaments = async () => {
         const res = await axios.get("http://localhost:5000/api/tournaments", {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: getAuthHeaders()
         });
         setTournaments(res.data);
     };
 
     const fetchMatches = async (tournamentId) => {
         const res = await axios.get("http://localhost:5000/api/matches", {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: getAuthHeaders()
         });
 
         const filtered = res.data.filter(m => m.tournament?._id === tournamentId);

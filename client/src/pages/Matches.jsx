@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import MatchScoreInput from "../components/MatchScoreInput";
+import { getAuthHeaders } from "../utils/api";
 
 export default function Matches() {
     const [matches, setMatches] = useState([]);
@@ -16,7 +17,7 @@ export default function Matches() {
     const fetchMatches = async () => {
         try {
             const res = await axios.get("http://localhost:5000/api/matches", {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: getAuthHeaders()
             });
             setMatches(res.data);
         } catch (err) {

@@ -15,7 +15,7 @@ export default function PlayerPage() {
     const fetchPlayer = async () => {
         try {
             const res = await axios.get(`http://localhost:5000/api/players/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: getAuthHeaders()
             });
             setPlayer(res.data.player);
             setStats(res.data.stats);

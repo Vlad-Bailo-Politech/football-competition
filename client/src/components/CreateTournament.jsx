@@ -16,7 +16,7 @@ export default function CreateTournament({ onCreated }) {
             const res = await axios.post("http://localhost:5000/api/tournaments", {
                 name, location, startDate, endDate, format
             }, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: getAuthHeaders()
             });
 
             alert("Турнір створено!");

@@ -21,14 +21,14 @@ export default function CreateMatch() {
 
     const fetchTournaments = async () => {
         const res = await axios.get("http://localhost:5000/api/tournaments", {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: getAuthHeaders()
         });
         setTournaments(res.data);
     };
 
     const fetchTeams = async () => {
         const res = await axios.get("http://localhost:5000/api/teams", {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: getAuthHeaders()
         });
         setTeams(res.data);
     };
@@ -46,7 +46,7 @@ export default function CreateMatch() {
 
         try {
             await axios.post("http://localhost:5000/api/matches", form, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: getAuthHeaders()
             });
 
             alert("Матч створено!");

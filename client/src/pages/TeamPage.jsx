@@ -15,7 +15,7 @@ export default function TeamPage() {
     const fetchTeam = async () => {
         try {
             const res = await axios.get(`http://localhost:5000/api/teams/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: getAuthHeaders()
             });
             setTeam(res.data);
         } catch (err) {

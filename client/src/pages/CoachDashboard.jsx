@@ -25,7 +25,7 @@ export default function CoachDashboard() {
     const fetchTeam = async () => {
         try {
             const res = await axios.get("http://localhost:5000/api/teams", {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: getAuthHeaders()
             });
 
             const myTeam = res.data.find(t => t.coach._id === user._id);
