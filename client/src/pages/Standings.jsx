@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 
 export default function Standings() {
@@ -77,6 +78,7 @@ export default function Standings() {
         }
 
         const tableArr = Object.values(stats).map(team => ({
+            id: team.id,
             ...team,
             goalDiff: team.goalsFor - team.goalsAgainst
         }));
@@ -129,7 +131,9 @@ export default function Standings() {
                     <tbody>
                         {table.map((team, i) => (
                             <tr key={i}>
-                                <td>{team.name}</td>
+                                <td>
+                                    <Link to={`/teams/${team.id}`}>{team.name}</Link>
+                                </td>
                                 <td>{team.played}</td>
                                 <td>{team.wins}</td>
                                 <td>{team.draws}</td>

@@ -29,16 +29,17 @@ router.get("/", async (req, res) => {
 });
 
 // Get team by ID
-router.get("/:id", async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
     const team = await Team.findById(req.params.id)
-      .populate("coach", "name")
-      .populate("tournament", "name")
-      .populate("players", "name email");
+      .populate("coach", "name email")
+      .populate("players", "name email")
+      .populate("tournament", "name");
+
     if (!team) return res.status(404).json({ message: "Team not found" });
     res.json(team);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching team" });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
