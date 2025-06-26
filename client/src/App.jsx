@@ -9,12 +9,14 @@ import TeamPage from "./pages/TeamPage";
 import PlayerPage from "./pages/PlayerPage";
 import PlayerRanking from "./pages/PlayerRanking";
 import PublicHome from "./pages/PublicHome";
+import Search from "./pages/Search";
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<PublicHome />} />
+        <Route path="/search" element={<Search />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/coach" element={<CoachDashboard />} />

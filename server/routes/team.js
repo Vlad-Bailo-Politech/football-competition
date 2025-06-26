@@ -38,10 +38,18 @@ router.post(
   }
 );
 
-// Публічний перегляд всіх команд
+// Публічний перегляд всіх команд із пошуком
 router.get("/", optionalAuth, async (req, res) => {
   try {
-    const teams = await Team.find()
+    const { search } = req.query;
+    const filter = {};
+
+    // Шукаємо по назві (регістронезалежно)
+    if (search) {
+      filter.name = { $regex: search, $options: "i" };
+    }
+
+    const teams = await Team.find(filter)
       .populate("coach", "name email")
       .populate("tournament", "name")
       .populate("players", "name email role");

@@ -39,6 +39,27 @@ router.post(
   }
 );
 
+// Публічний перегляд всіх гравців із пошуком
+router.get("/", optionalAuth, async (req, res) => {
+  try {
+    const { search } = req.query;
+    const filter = { role: "player" };
+
+    // Шукаємо по імені або email
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const players = await User.find(filter).select("name email avatarUrl");
+    res.json(players);
+  } catch (err) {
+    res.status(500).json({ message: "Error getting players" });
+  }
+});
+
 // Публічний перегляд гравця
 router.get("/:id", optionalAuth, async (req, res) => {
     try {
