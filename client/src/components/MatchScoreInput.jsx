@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { getAuthHeaders } from "../utils/api";
 
 export default function MatchScoreInput({ match, onUpdated }) {
     const [scoreA, setScoreA] = useState(match.scoreA ?? "");

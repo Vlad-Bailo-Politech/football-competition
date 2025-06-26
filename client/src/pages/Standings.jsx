@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { getAuthHeaders } from "../utils/api";
 
 export default function Standings() {
     const [tournaments, setTournaments] = useState([]);

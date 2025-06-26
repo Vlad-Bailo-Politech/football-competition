@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import CreateTournament from "../components/CreateTournament";
 import CreateMatch from "../components/CreateMatch";
+import { getAuthHeaders } from "../utils/api";
 
 export default function Dashboard() {
     const [user, setUser] = useState(null);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { getAuthHeaders } from "../utils/api";
 
 export default function CoachDashboard() {
     const [team, setTeam] = useState(null);

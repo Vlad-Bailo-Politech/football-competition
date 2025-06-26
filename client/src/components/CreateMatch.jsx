@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { getAuthHeaders } from "../utils/api";
 
 export default function CreateMatch() {
     const [tournaments, setTournaments] = useState([]);

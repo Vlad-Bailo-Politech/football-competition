@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
 const optionalAuth = require("../middleware/optionalAuth");
+const requireRole = require("../middleware/role");
 const User = require("../models/User");
 const Team = require("../models/Team");
 const Match = require("../models/Match");
