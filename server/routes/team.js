@@ -68,4 +68,47 @@ router.delete("/:id", auth, requireRole("coach"), async (req, res) => {
   }
 });
 
+// Add a player to a team
+router.put("/:id/add-player", auth, requireRole("coach"), async (req, res) => {
+  const { playerId } = req.body;
+
+  try {
+    const team = await Team.findById(req.params.id);
+    if (!team) return res.status(404).json({ message: "Team not found" });
+
+    if (team.coach.toString() !== req.user.id)
+      return res.status(403).json({ message: "You can only modify your own team" });
+
+    if (team.players.includes(playerId))
+      return res.status(400).json({ message: "Player already in team" });
+
+    team.players.push(playerId);
+    await team.save();
+
+    res.json({ message: "Player added", team });
+  } catch (err) {
+    res.status(500).json({ message: "Error adding player" });
+  }
+});
+
+// Remove a player from a team
+router.put("/:id/remove-player", auth, requireRole("coach"), async (req, res) => {
+  const { playerId } = req.body;
+
+  try {
+    const team = await Team.findById(req.params.id);
+    if (!team) return res.status(404).json({ message: "Team not found" });
+
+    if (team.coach.toString() !== req.user.id)
+      return res.status(403).json({ message: "You can only modify your own team" });
+
+    team.players = team.players.filter(id => id.toString() !== playerId);
+    await team.save();
+
+    res.json({ message: "Player removed", team });
+  } catch (err) {
+    res.status(500).json({ message: "Error removing player" });
+  }
+});
+
 module.exports = router;
