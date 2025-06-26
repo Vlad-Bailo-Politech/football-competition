@@ -15,4 +15,9 @@ router.get("/me", auth, async (req, res) => {
   }
 });
 
+// захищений маршрут для організаторів
+router.get("/admin-only", auth, requireRole("organizer"), (req, res) => {
+  res.send("You are an organizer!");
+});
+
 module.exports = router;
