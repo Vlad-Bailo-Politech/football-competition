@@ -64,4 +64,21 @@ router.delete("/:id", auth, requireRole("organizer"), async (req, res) => {
     }
 });
 
+// Update score
+router.put("/:id/score", auth, requireRole(["organizer", "referee"]), async (req, res) => {
+  const { scoreA, scoreB } = req.body;
+  try {
+    const match = await Match.findById(req.params.id);
+    if (!match) return res.status(404).json({ message: "Match not found" });
+
+    match.scoreA = scoreA;
+    match.scoreB = scoreB;
+    await match.save();
+
+    res.json({ message: "Score updated", match });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
