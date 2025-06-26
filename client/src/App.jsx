@@ -8,11 +8,13 @@ import Standings from "./pages/Standings";
 import TeamPage from "./pages/TeamPage";
 import PlayerPage from "./pages/PlayerPage";
 import PlayerRanking from "./pages/PlayerRanking";
+import PublicHome from "./pages/PublicHome";
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<PublicHome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/coach" element={<CoachDashboard />} />
