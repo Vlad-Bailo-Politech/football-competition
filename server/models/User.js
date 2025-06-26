@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
     enum: ["organizer", "coach", "player", "referee", "viewer"],
     default: "viewer",
   },
+  avatarUrl: String,
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

@@ -7,6 +7,7 @@ const userRoutes = require("./routes/user"); //
 const tournamentRoutes = require("./routes/tournament"); //
 const teamRoutes = require("./routes/team"); //
 const matchRoutes = require("./routes/match"); //
+const path = require("path");
 
 const app = express();
 app.use(cors());
@@ -16,7 +17,8 @@ app.use("/api/users", userRoutes); //
 app.use("/api/tournaments", tournamentRoutes); //
 app.use("/api/teams", teamRoutes); //
 app.use("/api/matches", matchRoutes); //
-app.use("/api/players", require("./routes/player"));
+app.use("/api/players", require("./routes/player")); //
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const PORT = process.env.PORT || 5000;
 

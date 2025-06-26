@@ -4,6 +4,39 @@ const auth = require("../middleware/auth");
 const optionalAuth = require("../middleware/optionalAuth");
 const requireRole = require("../middleware/role");
 const Team = require("../models/Team");
+const multer = require("multer");
+
+// Налаштування storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/teams/"),
+  filename: (req, file, cb) => {
+    const ext = file.originalname.split(".").pop();
+    cb(null, `${req.params.id}-${Date.now()}.${ext}`);
+  }
+});
+const upload = multer({ storage });
+
+// Завантажити логотип команди
+router.post(
+  "/:id/logo",
+  auth,
+  requireRole("coach"),
+  upload.single("logo"),
+  async (req, res) => {
+    try {
+      const team = await Team.findById(req.params.id);
+      if (!team) return res.status(404).json({ message: "Team not found" });
+      if (team.coach.toString() !== req.user.id)
+        return res.status(403).json({ message: "Forbidden" });
+
+      team.logoUrl = `${req.protocol}://${req.get("host")}/uploads/teams/${req.file.filename}`;
+      await team.save();
+      res.json({ message: "Logo uploaded", logoUrl: team.logoUrl });
+    } catch (err) {
+      res.status(500).json({ message: "Error uploading logo" });
+    }
+  }
+);
 
 // Публічний перегляд всіх команд
 router.get("/", optionalAuth, async (req, res) => {

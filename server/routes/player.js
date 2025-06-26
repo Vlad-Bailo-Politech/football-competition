@@ -5,6 +5,39 @@ const optionalAuth = require("../middleware/optionalAuth");
 const User = require("../models/User");
 const Team = require("../models/Team");
 const Match = require("../models/Match");
+const multer = require("multer");
+
+// Storage для аватарів
+const playerStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/players/"),
+  filename: (req, file, cb) => {
+    const ext = file.originalname.split(".").pop();
+    cb(null, `${req.params.id}-${Date.now()}.${ext}`);
+  }
+});
+const uploadPlayer = multer({ storage: playerStorage });
+
+// Завантаження аватара гравця
+router.post(
+  "/:id/avatar",
+  auth,
+  requireRole("coach"), // або дозволити самому гравцю?
+  uploadPlayer.single("avatar"),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+      if (!user || user.role !== "player")
+        return res.status(404).json({ message: "Player not found" });
+
+      // Опціонально: перевірити, що тренер цього гравця
+      user.avatarUrl = `${req.protocol}://${req.get("host")}/uploads/players/${req.file.filename}`;
+      await user.save();
+      res.json({ message: "Avatar uploaded", avatarUrl: user.avatarUrl });
+    } catch (err) {
+      res.status(500).json({ message: "Error uploading avatar" });
+    }
+  }
+);
 
 // Публічний перегляд гравця
 router.get("/:id", optionalAuth, async (req, res) => {
