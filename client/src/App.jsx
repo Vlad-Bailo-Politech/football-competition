@@ -11,6 +11,7 @@ import PlayerRanking from "./pages/PlayerRanking";
 import PublicHome from "./pages/PublicHome";
 import Search from "./pages/Search";
 import Tournaments from "./pages/Tournaments";
+import Statistics from "./pages/Statistics";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<PublicHome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/statistics" element={<Statistics />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/coach" element={<CoachDashboard />} />
         <Route path="/matches" element={<Matches />} />
