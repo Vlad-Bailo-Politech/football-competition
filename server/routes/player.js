@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
+const optionalAuth = require("../middleware/optionalAuth");
 const User = require("../models/User");
 const Team = require("../models/Team");
 const Match = require("../models/Match");
 
-// GET player by ID
-router.get("/:id", auth, async (req, res) => {
+// Публічний перегляд гравця
+router.get("/:id", optionalAuth, async (req, res) => {
     try {
         const player = await User.findById(req.params.id);
         if (!player || player.role !== "player") {
@@ -51,8 +52,8 @@ router.get("/:id", auth, async (req, res) => {
     }
 });
 
-// Get ranking player
-router.get("/ranking", auth, async (req, res) => {
+// Публічний рейтинг гравців
+router.get("/ranking", optionalAuth, async (req, res) => {
     try {
         const players = await User.find({ role: "player" });
         const teams = await Team.find().populate("tournament").populate("players");

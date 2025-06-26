@@ -1,22 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
+const optionalAuth = require("../middleware/optionalAuth");
 const requireRole = require("../middleware/role");
 const Team = require("../models/Team");
 
-// Create Team (coach only)
-router.post("/", auth, requireRole("coach"), async (req, res) => {
-  try {
-    const team = new Team({ ...req.body, coach: req.user.id });
-    await team.save();
-    res.status(201).json(team);
-  } catch (err) {
-    res.status(500).json({ message: "Error creating team" });
-  }
-});
-
-// Get all teams
-router.get("/", async (req, res) => {
+// Публічний перегляд всіх команд
+router.get("/", optionalAuth, async (req, res) => {
   try {
     const teams = await Team.find()
       .populate("coach", "name email")
@@ -28,8 +18,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get team by ID
-router.get("/:id", auth, async (req, res) => {
+// Публічний перегляд конкретної команди
+router.get("/:id", optionalAuth, async (req, res) => {
   try {
     const team = await Team.findById(req.params.id)
       .populate("coach", "name email")
@@ -43,33 +33,18 @@ router.get("/:id", auth, async (req, res) => {
   }
 });
 
-// Update team (only by coach)
-router.put("/:id", auth, requireRole("coach"), async (req, res) => {
+// Створення команди (тільки тренер)
+router.post("/", auth, requireRole("coach"), async (req, res) => {
   try {
-    const updated = await Team.findOneAndUpdate(
-      { _id: req.params.id, coach: req.user.id },
-      req.body,
-      { new: true }
-    );
-    if (!updated) return res.status(403).json({ message: "Forbidden or not found" });
-    res.json(updated);
+    const team = new Team({ ...req.body, coach: req.user.id });
+    await team.save();
+    res.status(201).json(team);
   } catch (err) {
-    res.status(500).json({ message: "Error updating team" });
+    res.status(500).json({ message: "Error creating team" });
   }
 });
 
-// Delete team (only by coach)
-router.delete("/:id", auth, requireRole("coach"), async (req, res) => {
-  try {
-    const deleted = await Team.findOneAndDelete({ _id: req.params.id, coach: req.user.id });
-    if (!deleted) return res.status(403).json({ message: "Forbidden or not found" });
-    res.json({ message: "Team deleted" });
-  } catch (err) {
-    res.status(500).json({ message: "Error deleting team" });
-  }
-});
-
-// Add a player to a team
+// Додавання гравця (тільки тренер)
 router.put("/:id/add-player", auth, requireRole("coach"), async (req, res) => {
   const { playerId } = req.body;
 
@@ -92,7 +67,7 @@ router.put("/:id/add-player", auth, requireRole("coach"), async (req, res) => {
   }
 });
 
-// Remove a player from a team
+// Видалення гравця (тільки тренер)
 router.put("/:id/remove-player", auth, requireRole("coach"), async (req, res) => {
   const { playerId } = req.body;
 
@@ -109,6 +84,32 @@ router.put("/:id/remove-player", auth, requireRole("coach"), async (req, res) =>
     res.json({ message: "Player removed", team });
   } catch (err) {
     res.status(500).json({ message: "Error removing player" });
+  }
+});
+
+// Оновлення команди (тільки тренер)
+router.put("/:id", auth, requireRole("coach"), async (req, res) => {
+  try {
+    const updated = await Team.findOneAndUpdate(
+      { _id: req.params.id, coach: req.user.id },
+      req.body,
+      { new: true }
+    );
+    if (!updated) return res.status(403).json({ message: "Forbidden or not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: "Error updating team" });
+  }
+});
+
+// Видалення команди (тільки тренер)
+router.delete("/:id", auth, requireRole("coach"), async (req, res) => {
+  try {
+    const deleted = await Team.findOneAndDelete({ _id: req.params.id, coach: req.user.id });
+    if (!deleted) return res.status(403).json({ message: "Forbidden or not found" });
+    res.json({ message: "Team deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting team" });
   }
 });
 

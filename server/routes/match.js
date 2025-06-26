@@ -1,35 +1,25 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
+const optionalAuth = require("../middleware/optionalAuth");
 const requireRole = require("../middleware/role");
 const Match = require("../models/Match");
 
-// Create match (organizer)
-router.post("/", auth, requireRole("organizer"), async (req, res) => {
-    try {
-        const match = new Match(req.body);
-        await match.save();
-        res.status(201).json(match);
-    } catch (err) {
-        res.status(500).json({ message: "Error creating match" });
-    }
-});
-
-// Get all matchs
-router.get("/", auth, async (req, res) => {
+// Публічний перегляд всіх матчів
+router.get("/", optionalAuth, async (req, res) => {
     try {
         const matches = await Match.find()
-            .populate("teamA", "name")
-            .populate("teamB", "name")
-            .populate("tournament", "name");
+        .populate("teamA", "name")
+        .populate("teamB", "name")
+        .populate("tournament", "name");
         res.json(matches);
     } catch (err) {
         res.status(500).json({ message: "Server error" });
     }
 });
 
-// Get match by ID
-router.get("/:id", async (req, res) => {
+// Публічний перегляд одного матчу
+router.get("/:id", optionalAuth, async (req, res) => {
     try {
         const match = await Match.findById(req.params.id)
             .populate("teamA", "name")
@@ -42,8 +32,19 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-// Update match (organizer only)
-router.put("/:id", auth, requireRole("organizer"), async (req, res) => {
+// Створення матчу (тільки для організатора)
+router.post("/", auth, requireRole("organizer"), async (req, res) => {
+    try {
+        const match = new Match(req.body);
+        await match.save();
+        res.status(201).json(match);
+    } catch (err) {
+        res.status(500).json({ message: "Error creating match" });
+    }
+});
+
+// Оновлення матчу (організатор або рефері)
+router.put("/:id", auth, requireRole(["organizer", "referee"]), async (req, res) => {
     try {
         const updated = await Match.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!updated) return res.status(404).json({ message: "Match not found" });
@@ -53,7 +54,24 @@ router.put("/:id", auth, requireRole("organizer"), async (req, res) => {
     }
 });
 
-// Delete match
+// Введення рахунку (організатор або рефері)
+router.put("/:id/score", auth, requireRole(["organizer", "referee"]), async (req, res) => {
+    const { scoreA, scoreB } = req.body;
+    try {
+        const match = await Match.findById(req.params.id);
+        if (!match) return res.status(404).json({ message: "Match not found" });
+        
+        match.scoreA = scoreA;
+        match.scoreB = scoreB;
+        await match.save();
+        
+        res.json({ message: "Score updated", match });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+// Видалення матчу (тільки організатор)
 router.delete("/:id", auth, requireRole("organizer"), async (req, res) => {
     try {
         const deleted = await Match.findByIdAndDelete(req.params.id);
@@ -62,23 +80,6 @@ router.delete("/:id", auth, requireRole("organizer"), async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: "Error deleting match" });
     }
-});
-
-// Update score
-router.put("/:id/score", auth, requireRole(["organizer", "referee"]), async (req, res) => {
-  const { scoreA, scoreB } = req.body;
-  try {
-    const match = await Match.findById(req.params.id);
-    if (!match) return res.status(404).json({ message: "Match not found" });
-
-    match.scoreA = scoreA;
-    match.scoreB = scoreB;
-    await match.save();
-
-    res.json({ message: "Score updated", match });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
 });
 
 module.exports = router;
