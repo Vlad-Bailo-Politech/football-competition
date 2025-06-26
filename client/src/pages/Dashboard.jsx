@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import CreateTournament from "../components/CreateTournament";
 
 export default function Dashboard() {
     const [user, setUser] = useState(null);
@@ -11,21 +12,36 @@ export default function Dashboard() {
         if (!token || !u) return;
 
         setUser(JSON.parse(u));
-        axios.get("http://localhost:5000/api/tournaments", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => setTournaments(res.data))
-            .catch(err => console.error(err));
+        fetchTournaments(token);
     }, []);
+
+    const fetchTournaments = async (token) => {
+        try {
+            const res = await axios.get("http://localhost:5000/api/tournaments", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setTournaments(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleCreated = (newTournament) => {
+        setTournaments(prev => [...prev, newTournament]);
+    };
 
     if (!user) return <div>Not logged in</div>;
 
     return (
         <div style={{ padding: 20 }}>
-            <h2>Welcome, {user.name}</h2>
-            <h3>Role: {user.role}</h3>
+            <h2>Привіт, {user.name}</h2>
+            <h3>Роль: {user.role}</h3>
 
-            <h4>Your Tournaments:</h4>
+            {user.role === "organizer" && (
+                <CreateTournament onCreated={handleCreated} />
+            )}
+
+            <h4 style={{ marginTop: 30 }}>Список турнірів:</h4>
             <ul>
                 {tournaments.map(t => (
                     <li key={t._id}>{t.name} ({t.location})</li>
