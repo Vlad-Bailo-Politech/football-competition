@@ -10,17 +10,19 @@ import PlayerPage from "./pages/PlayerPage";
 import PlayerRanking from "./pages/PlayerRanking";
 import PublicHome from "./pages/PublicHome";
 import Search from "./pages/Search";
+import Tournaments from "./pages/Tournaments";
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<PublicHome />} />
-        <Route path="/search" element={<Search />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/search" element={<Search />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/coach" element={<CoachDashboard />} />
         <Route path="/matches" element={<Matches />} />
+        <Route path="/tournaments" element={<Tournaments />} />
         <Route path="/standings" element={<Standings />} />
         <Route path="/teams/:id" element={<TeamPage />} />
         <Route path="/players/:id" element={<PlayerPage />} />
