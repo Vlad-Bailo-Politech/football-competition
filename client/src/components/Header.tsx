@@ -25,6 +25,7 @@ const Header = () => {
 
   const translations = {
     ua: {
+      home: 'Головна',
       tournaments: 'Турніри',
       matches: 'Матчі',
       teams: 'Команди',
@@ -35,6 +36,7 @@ const Header = () => {
       english: 'English'
     },
     en: {
+      home: 'Home',
       tournaments: 'Tournaments',
       matches: 'Matches',
       teams: 'Teams',
@@ -49,6 +51,7 @@ const Header = () => {
   const t = translations[language];
 
   const navItems = [
+    { label: t.home, path: '/' },
     { label: t.tournaments, path: '/tournaments' },
     { label: t.matches, path: '/matches' },
     { label: t.teams, path: '/teams' },
