@@ -1,40 +1,23 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const http = require("http");
-const { Server } = require("socket.io");
-require("dotenv").config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+require('dotenv').config();
 
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/user");
-const tournamentRoutes = require("./routes/tournament");
-const teamRoutes = require("./routes/team");
-const createMatchRoutes = require("./routes/match");
-const playerRoutes = require("./routes/player");
-const path = require("path");
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const organizerRoutes = require('./routes/organizer');
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
-
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/tournaments", tournamentRoutes);
-app.use("/api/teams", teamRoutes);
-app.use("/api/matches", createMatchRoutes(io));
-app.use("/api/players", playerRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/organizer', organizerRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Football API running");
-});
+app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
-io.on("connection", (socket) => {
-  console.log("New client connected", socket.id);
-  socket.on("disconnect", () => console.log("Client disconnected", socket.id));
-});
-
-module.exports = { app, server };
+const PORT = process.env.PORT || 5000;
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => app.listen(PORT, () => console.log(`Server on ${PORT}`)))
+  .catch(err => console.error(err));

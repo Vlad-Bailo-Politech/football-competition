@@ -24,11 +24,10 @@ const Matches = () => {
       id: '2',
       homeTeam: { id: '3', name: 'Металіст Харків', score: 2 },
       awayTeam: { id: '4', name: 'Зоря Луганськ', score: 2 },
-      status: 'live' as const,
+      status: 'upcoming' as const,
       startTime: '2024-01-15T21:00:00',
       venue: 'Металіст Арена',
       tournament: 'Кубок України',
-      minute: 73
     },
     {
       id: '3',
@@ -81,8 +80,8 @@ const Matches = () => {
             <TabsContent value={activeTab} className="mt-8">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredMatches.map((match) => (
-                  <MatchCard 
-                    key={match.id} 
+                  <MatchCard
+                    key={match.id}
                     match={match}
                     onClick={() => console.log('Navigate to match:', match.id)}
                   />
@@ -97,6 +96,7 @@ const Matches = () => {
                 </div>
               )}
             </TabsContent>
+
           </Tabs>
         </div>
       </main>

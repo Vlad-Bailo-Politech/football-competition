@@ -28,5 +28,5 @@ Thumbs.db
 # VSCode settings
 .vscode/
 
-# Optional: локальні тестові БД (якщо зберігаєш)
+# Optional: local test DB
 *.localdb

@@ -28,11 +28,10 @@ const HomePage = () => {
       id: '2',
       homeTeam: { id: '3', name: 'Металіст Харків', score: 1 },
       awayTeam: { id: '4', name: 'Зоря Луганськ', score: 1 },
-      status: 'live' as const,
+      status: 'upcoming' as const,
       startTime: '2024-01-15T21:00:00',
       venue: 'Металіст Арена',
       tournament: 'Кубок України',
-      minute: 67
     },
     {
       id: '3',
@@ -100,7 +99,7 @@ const HomePage = () => {
                   <Trophy className="w-5 h-5 mr-2" />
                   Переглянути турніри
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-football-green">
+                <Button size="lg" variant="secondary" className="bg-white text-football-green hover:bg-gray-100">
                   <Users className="w-5 h-5 mr-2" />
                   Зареєструвати команду
                 </Button>
@@ -148,50 +147,6 @@ const HomePage = () => {
                   match={match}
                   onClick={() => console.log('Navigate to match:', match.id)}
                 />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* News Section */}
-        <section className="py-12 bg-gray-100 dark:bg-gray-800">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Останні новини
-              </h2>
-              <Button variant="outline">
-                Всі новини
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {news.map((article) => (
-                <Card key={article.id} className="football-card overflow-hidden cursor-pointer">
-                  <div className="aspect-video bg-gray-200 dark:bg-gray-700 relative">
-                    <img 
-                      src={article.image} 
-                      alt={article.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <Badge className="absolute top-3 left-3 bg-football-green">
-                      {article.category}
-                    </Badge>
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-2">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {new Date(article.date).toLocaleDateString('uk-UA')}
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                      {article.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
-                      {article.excerpt}
-                    </p>
-                  </CardContent>
-                </Card>
               ))}
             </div>
           </div>

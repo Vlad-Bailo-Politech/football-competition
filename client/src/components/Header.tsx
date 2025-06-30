@@ -1,8 +1,8 @@
-
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from "react-i18next";
 import { Button } from '@/components/ui/button';
-import { Globe, LogIn, Menu, X } from 'lucide-react';
+import { Globe, LogIn, Menu, X, User } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,46 +20,39 @@ import LoginForm from './LoginForm';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState<'ua' | 'en'>('ua');
+  const [currentUser, setCurrentUser] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
-  const translations = {
-    ua: {
-      home: 'Головна',
-      tournaments: 'Турніри',
-      matches: 'Матчі',
-      teams: 'Команди',
-      participants: 'Учасники',
-      contacts: 'Контакти',
-      login: 'Вхід',
-      ukrainian: 'Українська',
-      english: 'English'
-    },
-    en: {
-      home: 'Home',
-      tournaments: 'Tournaments',
-      matches: 'Matches',
-      teams: 'Teams',
-      participants: 'Participants',
-      contacts: 'Contacts',
-      login: 'Login',
-      ukrainian: 'Українська',
-      english: 'English'
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setCurrentUser(JSON.parse(storedUser));
     }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    setCurrentUser(null);
+    navigate('/');
   };
 
-  const t = translations[language];
+  const changeLanguage = (lang) => {
+    i18n.changeLanguage(lang);
+  };
 
   const navItems = [
-    { label: t.home, path: '/' },
-    { label: t.tournaments, path: '/tournaments' },
-    { label: t.matches, path: '/matches' },
-    { label: t.teams, path: '/teams' },
-    { label: t.participants, path: '/participants' },
-    { label: t.contacts, path: '/contacts' },
+    { label: t('home'), path: '/' },
+    { label: t('tournaments'), path: '/tournaments' },
+    { label: t('matches'), path: '/matches' },
+    { label: t('teams'), path: '/teams' },
+    { label: t('participants'), path: '/participants' },
+    { label: t('contacts'), path: '/contacts' },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path) => location.pathname === path;
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
@@ -71,7 +64,7 @@ const Header = () => {
               <span className="text-white font-bold text-lg">⚽</span>
             </div>
             <span className="text-xl font-bold gradient-text hidden sm:inline">
-              Football Manager
+              OpenFootball
             </span>
           </Link>
 
@@ -81,58 +74,68 @@ const Header = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`font-medium transition-colors hover:text-football-green ${
-                  isActive(item.path)
-                    ? 'text-football-green border-b-2 border-football-green pb-1'
-                    : 'text-gray-600 dark:text-gray-300'
-                }`}
+                className={`font-medium transition-colors hover:text-football-green ${isActive(item.path)
+                  ? 'text-football-green border-b-2 border-football-green pb-1'
+                  : 'text-gray-600 dark:text-gray-300'
+                  }`}
               >
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          {/* Language Switcher & Login */}
+          {/* Language Switcher & User Buttons */}
           <div className="flex items-center space-x-4">
-            {/* Language Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center space-x-2">
                   <Globe className="w-4 h-4" />
-                  <span className="hidden sm:inline">{language === 'ua' ? 'УКР' : 'ENG'}</span>
+                  <span className="hidden sm:inline">{i18n.language === 'ua' ? 'УКР' : 'ENG'}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                <DropdownMenuItem 
-                  onClick={() => setLanguage('ua')}
-                  className="hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {t.ukrainian}
+                <DropdownMenuItem onClick={() => changeLanguage('ua')} className="hover:bg-gray-100 dark:hover:bg-gray-700">
+                  Українська
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setLanguage('en')}
-                  className="hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {t.english}
+                <DropdownMenuItem onClick={() => changeLanguage('en')} className="hover:bg-gray-100 dark:hover:bg-gray-700">
+                  English
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Login Dialog */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-football-gradient hover:bg-football-green-dark text-white">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  {t.login}
+            {currentUser ? (
+              <>
+                <Button
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-football-gradient hover:bg-football-green-dark text-white"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  {t('cabinet')}
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>{t.login}</DialogTitle>
-                </DialogHeader>
-                <LoginForm />
-              </DialogContent>
-            </Dialog>
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  className="border-red-500 text-red-500 hover:bg-red-100"
+                >
+                  {t('logout')}
+                </Button>
+              </>
+            ) : (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-football-gradient hover:bg-football-green-dark text-white">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    {t('login')}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>{t('login')}</DialogTitle>
+                  </DialogHeader>
+                  <LoginForm />
+                </DialogContent>
+              </Dialog>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -153,11 +156,10 @@ const Header = () => {
                   key={item.path}
                   to={item.path}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`font-medium transition-colors hover:text-football-green ${
-                    isActive(item.path)
-                      ? 'text-football-green'
-                      : 'text-gray-600 dark:text-gray-300'
-                  }`}
+                  className={`font-medium transition-colors hover:text-football-green ${isActive(item.path)
+                    ? 'text-football-green'
+                    : 'text-gray-600 dark:text-gray-300'
+                    }`}
                 >
                   {item.label}
                 </Link>

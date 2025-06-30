@@ -1,0 +1,26 @@
+{
+    "home": "Home",
+    "tournaments": "Tournaments",
+    "matches": "Matches",
+    "teams": "Teams",
+    "participants": "Participants",
+    "contacts": "Contacts",
+    "login": "Login",
+    "logout": "Logout",
+    "cabinet": "Cabinet",
+
+    "about": "About Us",
+    "contact": "Contact",
+    "socialMedia": "Social Media",
+    "liveStreams": "Match Streams",
+    "owner": "Website Owner",
+    "rights": "All rights reserved",
+    "email": "OpenFootball@gmail.com",
+    "address": "Kyiv, Sportyvna St., 1",
+
+    "welcomeMessage": "Welcome! You can view tournament information:",
+    "standings": "Standings",
+    "ranking": "Player Ranking",
+    "search": "Search",
+    "managementPrompt": "For managing teams, registrations and statistics"
+}

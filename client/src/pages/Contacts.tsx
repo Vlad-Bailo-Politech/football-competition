@@ -97,14 +97,14 @@ const Contacts = () => {
                         <Users className="w-4 h-4 text-football-green" />
                         <span>Реєстрація команди</span>
                       </div>
-                      <span className="font-semibold">500 грн</span>
+                      <span className="font-semibold">Безкоштовно</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div className="flex items-center space-x-2">
                         <Trophy className="w-4 h-4 text-football-green" />
                         <span>Організація турніру</span>
                       </div>
-                      <span className="font-semibold">5000 грн</span>
+                      <span className="font-semibold">Безкоштовно</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div className="flex items-center space-x-2">

@@ -1,16 +1,16 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const matchSchema = new mongoose.Schema({
-  tournament: { type: mongoose.Schema.Types.ObjectId, ref: "Tournament", required: true },
-  teamA: { type: mongoose.Schema.Types.ObjectId, ref: "Team", required: true },
-  teamB: { type: mongoose.Schema.Types.ObjectId, ref: "Team", required: true },
-  date: { type: Date, required: true },
-  location: String,
+  tournament: { type: mongoose.Schema.Types.ObjectId, ref: 'Tournament', required: true },
+  teamA:      { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
+  teamB:      { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
+  date:       { type: Date, required: true },
+  location:   { type: String },
+  status:     { type: String, enum: ['scheduled','live','finished'], default: 'scheduled' },
   score: {
-    teamA: { type: Number, default: 0 },
-    teamB: { type: Number, default: 0 }
-  },
-  status: { type: String, enum: ["scheduled", "finished"], default: "scheduled" }
+    teamA: { type: Number, default: null },
+    teamB: { type: Number, default: null }
+  }
 }, { timestamps: true });
 
-module.exports = mongoose.model("Match", matchSchema);
+module.exports = mongoose.model('Match', matchSchema);
