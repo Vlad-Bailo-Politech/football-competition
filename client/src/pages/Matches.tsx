@@ -1,53 +1,68 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MatchCard from '@/components/MatchCard';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+interface MatchFromServer {
+  _id: string;
+  teamA: { _id: string; name: string };
+  teamB: { _id: string; name: string };
+  tournament: { _id: string; name: string };
+  date: string;
+  status: 'scheduled' | 'live' | 'finished';
+  score: { teamA: number | null; teamB: number | null };
+}
+
+interface Match {
+  id: string;
+  homeTeam: { id: string; name: string; score: number | null };
+  awayTeam: { id: string; name: string; score: number | null };
+  status: 'live' | 'finished' | 'upcoming';
+  startTime: string;
+  venue: string;
+  tournament: string;
+  minute?: number;
+}
 
 const Matches = () => {
   const [activeTab, setActiveTab] = useState('all');
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const matches = [
-    {
-      id: '1',
-      homeTeam: { id: '1', name: 'Динамо Київ', score: 3 },
-      awayTeam: { id: '2', name: 'Шахтар Донецьк', score: 1 },
-      status: 'finished' as const,
-      startTime: '2024-01-14T19:00:00',
-      venue: 'НСК Олімпійський',
-      tournament: 'Прем\'єр-ліга України',
-      minute: 90
-    },
-    {
-      id: '2',
-      homeTeam: { id: '3', name: 'Металіст Харків', score: 2 },
-      awayTeam: { id: '4', name: 'Зоря Луганськ', score: 2 },
-      status: 'upcoming' as const,
-      startTime: '2024-01-15T21:00:00',
-      venue: 'Металіст Арена',
-      tournament: 'Кубок України',
-    },
-    {
-      id: '3',
-      homeTeam: { id: '5', name: 'Ворскла Полтава' },
-      awayTeam: { id: '6', name: 'Олімпік Донецьк' },
-      status: 'upcoming' as const,
-      startTime: '2024-01-16T17:00:00',
-      venue: 'Ворскла Арена',
-      tournament: 'Прем\'єр-ліга України'
-    },
-    {
-      id: '4',
-      homeTeam: { id: '7', name: 'Дніпро-1' },
-      awayTeam: { id: '8', name: 'Александрія' },
-      status: 'upcoming' as const,
-      startTime: '2024-01-17T19:30:00',
-      venue: 'Дніпро Арена',
-      tournament: 'Прем\'єр-ліга України'
+  useEffect(() => {
+    fetchMatches();
+  }, []);
+
+  const fetchMatches = async () => {
+    try {
+      const res = await axios.get<MatchFromServer[]>('http://localhost:5000/api/public/all-matches');
+      const transformedMatches = res.data.map((match): Match => ({
+        id: match._id,
+        homeTeam: { id: match.teamA._id, name: match.teamA.name, score: match.score.teamA },
+        awayTeam: { id: match.teamB._id, name: match.teamB.name, score: match.score.teamB },
+        status: match.status === 'scheduled' ? 'upcoming' : match.status as 'live' | 'finished' | 'upcoming',
+        startTime: match.date,
+        venue: '', // Можеш змінити, якщо буде поле
+        tournament: match.tournament.name,
+        minute: match.status === 'live' ? calculateMatchMinute(match.date) : undefined
+      }));
+
+      setMatches(transformedMatches);
+    } catch (err) {
+      console.error('Error fetching matches:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const calculateMatchMinute = (startTime: string) => {
+    const start = new Date(startTime);
+    const now = new Date();
+    const diffMinutes = Math.floor((now.getTime() - start.getTime()) / 60000);
+    return diffMinutes > 0 ? diffMinutes : 0;
+  };
 
   const filteredMatches = matches.filter(match => {
     if (activeTab === 'all') return true;
@@ -78,25 +93,30 @@ const Matches = () => {
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-8">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredMatches.map((match) => (
-                  <MatchCard
-                    key={match.id}
-                    match={match}
-                    onClick={() => console.log('Navigate to match:', match.id)}
-                  />
-                ))}
-              </div>
+              {loading ? (
+                <p className="text-center">Завантаження...</p>
+              ) : (
+                <>
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredMatches.map((match) => (
+                      <MatchCard
+                        key={match.id}
+                        match={match}
+                        onClick={() => console.log('Navigate to match:', match.id)}
+                      />
+                    ))}
+                  </div>
 
-              {filteredMatches.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">
-                    Немає матчів у цій категорії
-                  </p>
-                </div>
+                  {filteredMatches.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500 dark:text-gray-400 text-lg">
+                        Немає матчів у цій категорії
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
-
           </Tabs>
         </div>
       </main>

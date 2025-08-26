@@ -37,14 +37,14 @@ const Contacts = () => {
                     <Phone className="w-5 h-5 text-football-green" />
                     <div>
                       <div className="font-medium">Телефон</div>
-                      <div className="text-gray-600 dark:text-gray-400">+380 44 123 45 67</div>
+                      <div className="text-gray-600 dark:text-gray-400">+38 098 7500 844</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Mail className="w-5 h-5 text-football-green" />
                     <div>
                       <div className="font-medium">Email</div>
-                      <div className="text-gray-600 dark:text-gray-400">info@footballmanager.ua</div>
+                      <div className="text-gray-600 dark:text-gray-400">OpenFootball@gmail.com</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">

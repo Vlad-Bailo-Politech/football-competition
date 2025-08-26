@@ -1,67 +1,50 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Users, Calendar, MapPin } from 'lucide-react';
+import axios from 'axios';
 
 const Tournaments = () => {
   const navigate = useNavigate();
+  const [tournaments, setTournaments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const tournaments = [
-    {
-      id: '1',
-      name: 'Прем\'єр-ліга України 2024',
-      status: 'active',
-      teams: 16,
-      matches: 240,
-      startDate: '2024-02-01',
-      endDate: '2024-11-30',
-      location: 'Україна',
-      logo: '🏆'
-    },
-    {
-      id: '2',
-      name: 'Кубок України 2024',
-      status: 'active',
-      teams: 32,
-      matches: 31,
-      startDate: '2024-03-15',
-      endDate: '2024-05-25',
-      location: 'Україна',
-      logo: '🏆'
-    },
-    {
-      id: '3',
-      name: 'Аматорська ліга Києва',
-      status: 'upcoming',
-      teams: 12,
-      matches: 66,
-      startDate: '2024-04-01',
-      endDate: '2024-10-15',
-      location: 'Київ',
-      logo: '⚽'
-    }
-  ];
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/public/tournaments'); // Повний шлях
+        console.log(response.data);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-500';
-      case 'upcoming': return 'bg-blue-500';
-      case 'finished': return 'bg-gray-500';
-      default: return 'bg-gray-500';
-    }
+        if (Array.isArray(response.data)) {
+          setTournaments(response.data);
+        } else {
+          console.error('Отримані дані не є масивом', response.data);
+          setTournaments([]);
+        }
+      } catch (error) {
+        console.error('Помилка при завантаженні турнірів', error);
+        setTournaments([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTournaments();
+  }, []);
+
+  const getStatusColor = (startDate: string) => {
+    const today = new Date();
+    const start = new Date(startDate);
+    return start <= today ? 'bg-green-500' : 'bg-blue-500';
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return 'Активний';
-      case 'upcoming': return 'Очікується';
-      case 'finished': return 'Завершено';
-      default: return status;
-    }
+  const getStatusText = (startDate: string) => {
+    const today = new Date();
+    const start = new Date(startDate);
+    return start <= today ? 'Активний' : 'Очікується';
   };
 
   const handleTournamentClick = (tournamentId: string) => {
@@ -83,54 +66,71 @@ const Tournaments = () => {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {tournaments.map((tournament) => (
-              <Card 
-                key={tournament.id} 
-                className="football-card cursor-pointer group"
-                onClick={() => handleTournamentClick(tournament.id)}
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="text-4xl mb-2">{tournament.logo}</div>
-                    <Badge className={`${getStatusColor(tournament.status)} text-white`}>
-                      {getStatusText(tournament.status)}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-xl group-hover:text-football-green transition-colors">
-                    {tournament.name}
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-football-green" />
-                      <span className="text-sm">{tournament.teams} команд</span>
+          {loading ? (
+            <p className="text-center">Завантаження турнірів...</p>
+          ) : tournaments.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {tournaments.map((tournament) => (
+                <Card
+                  key={tournament._id}
+                  className="football-card cursor-pointer group"
+                  // onClick={() => handleTournamentClick(tournament._id)}
+                >
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="text-4xl mb-2">🏆</div>
+                      <Badge className={`${getStatusColor(tournament.startDate)} text-white`}>
+                        {getStatusText(tournament.startDate)}
+                      </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Trophy className="w-4 h-4 text-football-green" />
-                      <span className="text-sm">{tournament.matches} матчів</span>
+                    <CardTitle className="text-xl group-hover:text-football-green transition-colors">
+                      {tournament.name}
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-football-green" />
+                        <span className="text-sm">{tournament.teams?.length || 0} команд</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Trophy className="w-4 h-4 text-football-green" />
+                        <span className="text-sm">
+                          {tournament.groupStage
+                            ? `Груповий етап (${tournament.groupLegs || 1} коло)`
+                            : tournament.format === 'group'
+                            ? 'Груповий етап'
+                            : 'Без групового етапу'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-football-green" />
-                      <span className="text-sm">
-                        {new Date(tournament.startDate).toLocaleDateString('uk-UA')} - 
-                        {new Date(tournament.endDate).toLocaleDateString('uk-UA')}
-                      </span>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-football-green" />
+                        <span className="text-sm">
+                          Початок: {new Date(tournament.startDate).toLocaleDateString('uk-UA')}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-football-green" />
+                        <span className="text-sm">{tournament.location}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-football-green" />
-                      <span className="text-sm">{tournament.location}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+
+                    {tournament.organizer && (
+                      <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        Організатор: {tournament.organizer.name}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center">Наразі турнірів немає.</p>
+          )}
         </div>
       </main>
 

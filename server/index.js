@@ -6,6 +6,9 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const organizerRoutes = require('./routes/organizer');
+const userRoutes = require("./routes/users");
+const publicRoutes = require('./routes/public');
+const coachRoutes = require('./routes/coach');
 
 const app = express();
 app.use(cors());
@@ -14,6 +17,9 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/organizer', organizerRoutes);
+app.use("/api/users", userRoutes);
+app.use('/api/public', publicRoutes);
+app.use('/api/coach', coachRoutes);
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 

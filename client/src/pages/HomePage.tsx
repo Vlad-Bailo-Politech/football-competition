@@ -1,82 +1,82 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MatchCard from '@/components/MatchCard';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, Trophy, Users, TrendingUp, ArrowRight, Clock } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Trophy, Users, Calendar, TrendingUp, ArrowRight } from 'lucide-react';
+
+interface ServerMatch {
+  _id: string;
+  teamA: { _id: string; name: string };
+  teamB: { _id: string; name: string };
+  date: string;
+  location?: string;
+  status: 'scheduled' | 'live' | 'finished';
+  score: { teamA: number | null; teamB: number | null };
+  tournamentName: string;
+}
+
+interface MatchCardFormat {
+  id: string;
+  homeTeam: { id: string; name: string; score?: number };
+  awayTeam: { id: string; name: string; score?: number };
+  startTime: string;
+  venue: string;
+  tournament: string;
+  status: 'upcoming' | 'live' | 'finished';
+  minute?: number;
+}
+
+interface Stats {
+  tournamentCount: number;
+  teamCount: number;
+  matchCount: number;
+  viewCount: number;
+}
 
 const HomePage = () => {
-  const [language] = useState<'ua' | 'en'>('ua');
+  const [matches, setMatches] = useState<MatchCardFormat[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data for demonstration
-  const featuredMatches = [
-    {
-      id: '1',
-      homeTeam: { id: '1', name: 'Динамо Київ', score: 2 },
-      awayTeam: { id: '2', name: 'Шахтар Донецьк', score: 1 },
-      status: 'finished' as const,
-      startTime: '2024-01-15T19:00:00',
-      venue: 'НСК Олімпійський',
-      tournament: 'Прем\'єр-ліга України',
-      minute: 90
-    },
-    {
-      id: '2',
-      homeTeam: { id: '3', name: 'Металіст Харків', score: 1 },
-      awayTeam: { id: '4', name: 'Зоря Луганськ', score: 1 },
-      status: 'upcoming' as const,
-      startTime: '2024-01-15T21:00:00',
-      venue: 'Металіст Арена',
-      tournament: 'Кубок України',
-    },
-    {
-      id: '3',
-      homeTeam: { id: '5', name: 'Ворскла Полтава' },
-      awayTeam: { id: '6', name: 'Олімпік Донецьк' },
-      status: 'upcoming' as const,
-      startTime: '2024-01-16T17:00:00',
-      venue: 'Ворскла Арена',
-      tournament: 'Прем\'єр-ліга України'
-    }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const resMatches = await axios.get<ServerMatch[]>('http://localhost:5000/api/public/matches-of-the-day');
+        const resStats = await axios.get<Stats>('http://localhost:5000/api/public/stats');
 
-  const news = [
-    {
-      id: '1',
-      title: 'Старт нового сезону Прем\'єр-ліги України',
-      excerpt: 'Сьогодні розпочинається новий сезон найвищого дивізіону українського футболу. 16 команд поборються за чемпіонський титул.',
-      date: '2024-01-15',
-      category: 'Новини ліги',
-      image: '/placeholder.svg?height=200&width=400'
-    },
-    {
-      id: '2',
-      title: 'Трансферне вікно: найгучніші переходи',
-      excerpt: 'Огляд найбільш резонансних трансферів зимового вікна. Які команди посилились найкраще?',
-      date: '2024-01-14',
-      category: 'Трансфери',
-      image: '/placeholder.svg?height=200&width=400'
-    },
-    {
-      id: '3',
-      title: 'Збірна готується до відбіркових матчів',
-      excerpt: 'Національна команда України розпочала підготовку до відбіркових матчів Євро-2024.',
-      date: '2024-01-13',
-      category: 'Збірна',
-      image: '/placeholder.svg?height=200&width=400'
-    }
-  ];
+        const transformedMatches: MatchCardFormat[] = resMatches.data.map((match) => ({
+          id: match._id,
+          homeTeam: { id: match.teamA._id, name: match.teamA.name, score: match.score.teamA ?? undefined },
+          awayTeam: { id: match.teamB._id, name: match.teamB.name, score: match.score.teamB ?? undefined },
+          startTime: match.date,
+          venue: match.location || 'Не вказано',
+          tournament: match.tournamentName || 'Турнір',
+          status: match.status === 'scheduled' ? 'upcoming' : match.status,
+          minute: match.status === 'live' ? calculateMatchMinute(match.date) : undefined
+        }));
 
-  const stats = [
-    { icon: Trophy, label: 'Активних турнірів', value: '12' },
-    { icon: Users, label: 'Зареєстрованих команд', value: '148' },
-    { icon: Calendar, label: 'Матчів цього місяця', value: '64' },
-    { icon: TrendingUp, label: 'Переглядів трансляцій', value: '2.4M' }
-  ];
+        setMatches(transformedMatches);
+        setStats(resStats.data);
+      } catch (err) {
+        console.error('Error loading data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const calculateMatchMinute = (startTime: string) => {
+    const start = new Date(startTime);
+    const now = new Date();
+    const diffMinutes = Math.floor((now.getTime() - start.getTime()) / 60000);
+    return diffMinutes > 0 ? diffMinutes : 0;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
@@ -95,14 +95,18 @@ const HomePage = () => {
                 Професійна система управління турнірами
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" variant="secondary" className="bg-white text-football-green hover:bg-gray-100">
-                  <Trophy className="w-5 h-5 mr-2" />
-                  Переглянути турніри
-                </Button>
-                <Button size="lg" variant="secondary" className="bg-white text-football-green hover:bg-gray-100">
-                  <Users className="w-5 h-5 mr-2" />
-                  Зареєструвати команду
-                </Button>
+                <Link to="/tournaments">
+                  <Button size="lg" variant="secondary" className="bg-white text-football-green hover:bg-gray-100">
+                    <Trophy className="w-5 h-5 mr-2" />
+                    Переглянути турніри
+                  </Button>
+                </Link>
+                <Link to="/contacts">
+                  <Button size="lg" variant="secondary" className="bg-white text-football-green hover:bg-gray-100">
+                    <Users className="w-5 h-5 mr-2" />
+                    Зареєструвати команду
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -111,17 +115,43 @@ const HomePage = () => {
         {/* Stats Section */}
         <section className="py-12 bg-white dark:bg-gray-800">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {stats.map((stat, index) => (
-                <Card key={index} className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+            {stats ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
                   <CardContent className="pt-6">
-                    <stat.icon className="w-8 h-8 mx-auto mb-2 text-football-green" />
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</div>
+                    <Trophy className="w-8 h-8 mx-auto mb-2 text-football-green" />
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.tournamentCount}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Активних турнірів</div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+
+                <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="pt-6">
+                    <Users className="w-8 h-8 mx-auto mb-2 text-football-green" />
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.teamCount}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Зареєстрованих команд</div>
+                  </CardContent>
+                </Card>
+
+                <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="pt-6">
+                    <Calendar className="w-8 h-8 mx-auto mb-2 text-football-green" />
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.matchCount}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Матчів цього місяця</div>
+                  </CardContent>
+                </Card>
+
+                <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="pt-6">
+                    <TrendingUp className="w-8 h-8 mx-auto mb-2 text-football-green" />
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.viewCount}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Переглядів трансляцій</div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <p className="text-center">Завантаження статистики...</p>
+            )}
           </div>
         </section>
 
@@ -141,13 +171,19 @@ const HomePage = () => {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {featuredMatches.map((match) => (
-                <MatchCard 
-                  key={match.id} 
-                  match={match}
-                  onClick={() => console.log('Navigate to match:', match.id)}
-                />
-              ))}
+              {loading ? (
+                <p>Завантаження матчів...</p>
+              ) : matches.length > 0 ? (
+                matches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    onClick={() => console.log('Navigate to match:', match.id)}
+                  />
+                ))
+              ) : (
+                <p>Матчів на сьогодні немає.</p>
+              )}
             </div>
           </div>
         </section>

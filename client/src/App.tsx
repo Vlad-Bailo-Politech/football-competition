@@ -21,6 +21,9 @@ import EditTournament from '@/pages/organizer/EditTournament';
 import SetupTournament from '@/pages/organizer/SetupTournament';
 import MatchesList from '@/pages/organizer/MatchesList';
 import Unauthorized from '@/pages/Unauthorized';
+import StandingsTable from '@/components/StandingsTable';
+import EditMatch from '@/components/EditMatch';
+import EditTeam from '@/components/EditTeam';
 
 const queryClient = new QueryClient();
 
@@ -72,6 +75,16 @@ const App = () => (
               </ProtectedByRole>
             }
           />
+
+          {/* Новий маршрут для таблиці */}
+          <Route path="/organizer/tournaments/:id/standings" element={<StandingsTable />} />
+
+          <Route path="/organizer/tournaments/:tournamentId/matches/:matchId/edit" element={<EditMatch />} />
+
+          <Route path="/organizer/tournaments/:id" element={<EditTournament />} />
+
+          <Route path="/organizer/teams/:teamId/edit" element={<EditTeam />} />
+
 
           {/* Тільки для адміністратора */}
           {/* <Route
