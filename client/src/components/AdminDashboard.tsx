@@ -13,6 +13,14 @@ interface User {
   name: string;
   email: string;
   role: 'organizer' | 'coach' | 'player' | 'referee';
+  photo?: string;
+  birthDate?: string;
+  team?: { _id: string; name: string };
+}
+
+interface Team {
+  _id: string;
+  name: string;
 }
 
 const PAGE_SIZE = 10;
@@ -22,11 +30,22 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { token } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
-  const [formData, setFormData] = useState({
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    password: string;
+    role: User['role'];
+    photo?: File;
+    birthDate?: string;
+    team?: string;
+  }>({
     name: '',
     email: '',
     password: '',
-    role: 'organizer' as User['role']
+    role: 'organizer',
+    birthDate: '',
+    team: '',
   });
   const [message, setMessage] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -49,12 +68,22 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const fetchTeams = async () => {
+    try {
+      const res = await api.get<Team[]>('/teams');
+      setTeams(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchTeams();
   }, []);
 
   const resetForm = () => {
-    setFormData({ name: '', email: '', password: '', role: 'organizer' });
+    setFormData({ name: '', email: '', password: '', role: 'organizer', birthDate: '', team: '' });
     setEditingId(null);
     setMessage('');
   };
@@ -66,14 +95,29 @@ const AdminDashboard: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
+
     try {
+      const fd = new FormData();
+      fd.append('name', formData.name);
+      fd.append('email', formData.email);
+      if (formData.password) fd.append('password', formData.password);
+      fd.append('role', formData.role);
+      if (formData.photo) fd.append('photo', formData.photo);
+      if (formData.birthDate) fd.append('birthDate', formData.birthDate);
+      if (formData.team) fd.append('team', formData.team);
+
       if (editingId) {
-        await api.put(`/users/${editingId}`, formData);
+        await api.put(`/users/${editingId}`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         setMessage('Користувача оновлено');
       } else {
-        await api.post('/users', formData);
+        await api.post('/users', fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         setMessage('Користувача створено');
       }
+
       resetForm();
       fetchUsers();
     } catch (err: any) {
@@ -83,7 +127,14 @@ const AdminDashboard: React.FC = () => {
 
   const startEdit = (u: User) => {
     setEditingId(u._id);
-    setFormData({ name: u.name, email: u.email, password: '', role: u.role });
+    setFormData({
+      name: u.name,
+      email: u.email,
+      password: '',
+      role: u.role,
+      birthDate: u.birthDate || '',
+      team: u.team?._id || '',
+    });
     setMessage('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -125,63 +176,53 @@ const AdminDashboard: React.FC = () => {
         <form onSubmit={handleSubmit} className="max-w-md space-y-4">
           <div>
             <Label htmlFor="name">Ім’я</Label>
-            <Input
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+            <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
           </div>
           <div>
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+            <Input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required />
           </div>
           <div>
             <Label htmlFor="password">
-              {editingId
-                ? 'Новий пароль (залиште порожнім, якщо без змін)'
-                : 'Пароль'}
+              {editingId ? 'Новий пароль (залиште порожнім, якщо без змін)' : 'Пароль'}
             </Label>
-            <Input
-              id="password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required={!editingId}
-            />
+            <Input id="password" type="password" name="password" value={formData.password} onChange={handleChange} required={!editingId} />
           </div>
           <div>
             <Label htmlFor="role">Роль</Label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            >
+            <select id="role" name="role" value={formData.role} onChange={handleChange} className="w-full border rounded p-2">
               <option value="organizer">Organizer</option>
               <option value="coach">Coach</option>
               <option value="player">Player</option>
               <option value="referee">Referee</option>
             </select>
           </div>
+          <div>
+            <Label htmlFor="birthDate">Дата народження (необов'язково)</Label>
+            <Input id="birthDate" type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} />
+          </div>
+          <div>
+            <Label htmlFor="team">Команда (необов'язково)</Label>
+            <select id="team" name="team" value={formData.team} onChange={handleChange} className="w-full border rounded p-2">
+              <option value="">Немає</option>
+              {teams.map(team => (
+                <option key={team._id} value={team._id}>{team.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="photo">Фото (необов'язково)</Label>
+            <Input id="photo" type="file" name="photo" accept="image/*" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) setFormData(f => ({ ...f, photo: file }));
+            }} />
+          </div>
           <div className="flex space-x-2">
             <Button type="submit" className="bg-football-gradient text-white">
               {editingId ? 'Зберегти' : 'Створити'}
             </Button>
             {editingId && (
-              <Button variant="ghost" onClick={resetForm}>
-                Скасувати
-              </Button>
+              <Button variant="ghost" onClick={resetForm}>Скасувати</Button>
             )}
           </div>
         </form>
@@ -194,11 +235,7 @@ const AdminDashboard: React.FC = () => {
           <button
             key={r}
             onClick={() => { setRoleFilter(r); setPage(1); }}
-            className={`px-3 py-1 rounded ${
-              roleFilter === r
-                ? 'bg-football-green text-white'
-                : 'bg-gray-200'
-            }`}
+            className={`px-3 py-1 rounded ${roleFilter === r ? 'bg-football-green text-white' : 'bg-gray-200'}`}
           >
             {r === 'all' ? 'Усі' : r.charAt(0).toUpperCase() + r.slice(1)}
           </button>
@@ -212,6 +249,8 @@ const AdminDashboard: React.FC = () => {
             <th className="p-2">Ім’я</th>
             <th className="p-2">Email</th>
             <th className="p-2">Role</th>
+            <th className="p-2">Дата народження</th>
+            <th className="p-2">Команда</th>
             <th className="p-2">Дії</th>
           </tr>
         </thead>
@@ -221,25 +260,17 @@ const AdminDashboard: React.FC = () => {
               <td className="p-2">{u.name}</td>
               <td className="p-2">{u.email}</td>
               <td className="p-2">{u.role}</td>
+              <td className="p-2">{u.birthDate ? new Date(u.birthDate).toLocaleDateString() : '-'}</td>
+              <td className="p-2">{u.team?.name || '-'}</td>
               <td className="p-2 space-x-2">
-                <Button size="sm" onClick={() => startEdit(u)}>
-                  Редагувати
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleDelete(u._id)}
-                >
-                  Видалити
-                </Button>
+                <Button size="sm" onClick={() => startEdit(u)}>Редагувати</Button>
+                <Button size="sm" variant="destructive" onClick={() => handleDelete(u._id)}>Видалити</Button>
               </td>
             </tr>
           ))}
           {pageData.length === 0 && (
             <tr>
-              <td colSpan={4} className="text-center py-4">
-                Немає користувачів
-              </td>
+              <td colSpan={6} className="text-center py-4">Немає користувачів</td>
             </tr>
           )}
         </tbody>
@@ -247,23 +278,9 @@ const AdminDashboard: React.FC = () => {
 
       {/* pagination */}
       <div className="flex justify-center space-x-4">
-        <Button
-          size="sm"
-          onClick={() => setPage(p => Math.max(1, p - 1))}
-          disabled={page === 1}
-        >
-          Попередня
-        </Button>
-        <span className="self-center">
-          Сторінка {page} з {totalPages}
-        </span>
-        <Button
-          size="sm"
-          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-        >
-          Наступна
-        </Button>
+        <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Попередня</Button>
+        <span className="self-center">Сторінка {page} з {totalPages}</span>
+        <Button size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Наступна</Button>
       </div>
     </div>
   );

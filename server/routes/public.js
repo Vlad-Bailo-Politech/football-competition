@@ -86,7 +86,9 @@ router.get('/teams', async (req, res) => {
 // Отримати всіх гравців
 router.get('/players', async (req, res) => {
   try {
-    const players = await User.find({ role: 'player' });
+    const players = await User.find({ role: 'player' })
+      .select('-password')
+      .populate('team', 'name');
     res.json(players);
   } catch (err) {
     console.error(err);
@@ -97,7 +99,9 @@ router.get('/players', async (req, res) => {
 // Отримати всіх тренерів
 router.get('/coaches', async (req, res) => {
   try {
-    const coaches = await User.find({ role: 'coach' });
+    const coaches = await User.find({ role: 'coach' })
+      .select('-password')
+      .populate('team', 'name');
     res.json(coaches);
   } catch (err) {
     console.error(err);
@@ -108,7 +112,9 @@ router.get('/coaches', async (req, res) => {
 // Отримати всіх рефері
 router.get('/referees', async (req, res) => {
   try {
-    const referees = await User.find({ role: 'referee' });
+    const referees = await User.find({ role: 'referee' })
+      .select('-password')
+      .populate('team', 'name');
     res.json(referees);
   } catch (err) {
     console.error(err);

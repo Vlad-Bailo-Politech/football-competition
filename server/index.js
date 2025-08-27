@@ -14,6 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// API маршрути
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/organizer', organizerRoutes);
@@ -21,9 +22,14 @@ app.use("/api/users", userRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/coach', coachRoutes);
 
-app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => app.listen(PORT, () => console.log(`Server on ${PORT}`)))
-  .catch(err => console.error(err));
+  .then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
+  .catch(err => console.error('DB connection error:', err));

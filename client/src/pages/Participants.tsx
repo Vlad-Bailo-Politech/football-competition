@@ -10,7 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 interface User {
   _id: string;
   name: string;
-  email: string;
+  role: string;
+  photo?: string | null;
+  birthDate?: string | null; // ISO-рядок з бекенду
+  team?: {
+    _id: string;
+    name: string;
+  } | null;
 }
 
 const Participants = () => {
@@ -77,23 +83,35 @@ const Participants = () => {
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="text-4xl">⚽</div>
+                        {player.photo ? (
+                          <img
+                            src={`http://localhost:5000${player.photo}`}
+                            alt={player.name}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-4xl">⚽</div>
+                        )}
                         <div>
                           <CardTitle className="text-lg group-hover:text-football-green transition-colors">
                             {player.name}
                           </CardTitle>
+                          {/* <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Роль: {player.role}
+                          </p> */}
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Email: {player.email}
+                            Дата народження:{" "}
+                            {player.birthDate
+                              ? new Date(player.birthDate).toLocaleDateString("uk-UA")
+                              : "—"}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Команда: {player.team ? player.team.name : "Немає"}
                           </p>
                         </div>
                       </div>
                       <Badge variant="secondary">Гравець</Badge>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        Детальніша інформація недоступна
-                      </p>
-                    </CardContent>
                   </Card>
                 ))}
               </div>
@@ -110,23 +128,35 @@ const Participants = () => {
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="text-4xl">👨‍💼</div>
+                        {coach.photo ? (
+                          <img
+                            src={`http://localhost:5000${coach.photo}`}
+                            alt={coach.name}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-4xl">👨‍💼</div>
+                        )}
                         <div>
                           <CardTitle className="text-lg group-hover:text-football-green transition-colors">
                             {coach.name}
                           </CardTitle>
+                          {/* <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Роль: {coach.role}
+                          </p> */}
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Email: {coach.email}
+                            Дата народження:{" "}
+                            {coach.birthDate
+                              ? new Date(coach.birthDate).toLocaleDateString("uk-UA")
+                              : "—"}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Команда: {coach.team ? coach.team.name : "Немає"}
                           </p>
                         </div>
                       </div>
                       <Badge variant="secondary">Тренер</Badge>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        Детальніша інформація недоступна
-                      </p>
-                    </CardContent>
                   </Card>
                 ))}
               </div>
@@ -143,23 +173,35 @@ const Participants = () => {
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="text-4xl">👨‍⚖️</div>
+                        {referee.photo ? (
+                          <img
+                            src={`http://localhost:5000${referee.photo}`}
+                            alt={referee.name}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-4xl">👨‍⚖️</div>
+                        )}
                         <div>
                           <CardTitle className="text-lg group-hover:text-football-green transition-colors">
                             {referee.name}
                           </CardTitle>
+                          {/* <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Роль: {referee.role}
+                          </p> */}
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Email: {referee.email}
+                            Дата народження:{" "}
+                            {referee.birthDate
+                              ? new Date(referee.birthDate).toLocaleDateString("uk-UA")
+                              : "—"}
                           </p>
+                          {/* <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Команда: {referee.team ? referee.team.name : "Немає"}
+                          </p> */}
                         </div>
                       </div>
                       <Badge variant="secondary">Рефері</Badge>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        Детальніша інформація недоступна
-                      </p>
-                    </CardContent>
                   </Card>
                 ))}
               </div>
