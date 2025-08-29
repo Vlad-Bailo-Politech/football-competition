@@ -83,15 +83,15 @@ const Participants = () => {
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-3">
-                        {player.photo ? (
-                          <img
-                            src={`http://localhost:5000${player.photo}`}
-                            alt={player.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-4xl">⚽</div>
-                        )}
+                        <img
+                          src={
+                            player.photo
+                              ? `http://localhost:5000${player.photo}`
+                              : "http://localhost:5000/uploads/defaults/default-avatar-player.png"
+                          }
+                          alt={player.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
                         <div>
                           <CardTitle className="text-lg group-hover:text-football-green transition-colors">
                             {player.name}
@@ -128,15 +128,15 @@ const Participants = () => {
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-3">
-                        {coach.photo ? (
-                          <img
-                            src={`http://localhost:5000${coach.photo}`}
-                            alt={coach.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-4xl">👨‍💼</div>
-                        )}
+                        <img
+                          src={
+                            coach.photo
+                              ? `http://localhost:5000${coach.photo}`
+                              : "http://localhost:5000/uploads/defaults/default-avatar-coach.png"
+                          }
+                          alt={coach.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
                         <div>
                           <CardTitle className="text-lg group-hover:text-football-green transition-colors">
                             {coach.name}
@@ -173,15 +173,15 @@ const Participants = () => {
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-3">
-                        {referee.photo ? (
-                          <img
-                            src={`http://localhost:5000${referee.photo}`}
-                            alt={referee.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-4xl">👨‍⚖️</div>
-                        )}
+                        <img
+                          src={
+                            referee.photo
+                              ? `http://localhost:5000${referee.photo}`
+                              : "http://localhost:5000/uploads/defaults/default-avatar-referee.png"
+                          }
+                          alt={referee.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
                         <div>
                           <CardTitle className="text-lg group-hover:text-football-green transition-colors">
                             {referee.name}

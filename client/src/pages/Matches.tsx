@@ -7,12 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface MatchFromServer {
   _id: string;
-  teamA: { _id: string; name: string };
-  teamB: { _id: string; name: string };
+  teamA: { _id: string; name: string } | null;
+  teamB: { _id: string; name: string } | null;
   tournament: { _id: string; name: string };
   date: string;
   status: 'scheduled' | 'live' | 'finished';
   score: { teamA: number | null; teamB: number | null };
+  location?: string;
 }
 
 interface Match {
@@ -40,12 +41,20 @@ const Matches = () => {
       const res = await axios.get<MatchFromServer[]>('http://localhost:5000/api/public/all-matches');
       const transformedMatches = res.data.map((match): Match => ({
         id: match._id,
-        homeTeam: { id: match.teamA._id, name: match.teamA.name, score: match.score.teamA },
-        awayTeam: { id: match.teamB._id, name: match.teamB.name, score: match.score.teamB },
+        homeTeam: {
+          id: match.teamA?._id ?? "unknown",
+          name: match.teamA?.name ?? "unknown",
+          score: match.score.teamA
+        },
+        awayTeam: {
+          id: match.teamB?._id ?? "unknown",
+          name: match.teamB?.name ?? "unknown",
+          score: match.score.teamB
+        },
         status: match.status === 'scheduled' ? 'upcoming' : match.status as 'live' | 'finished' | 'upcoming',
         startTime: match.date,
-        venue: '', // Можеш змінити, якщо буде поле
-        tournament: match.tournament.name,
+        venue: match.location ?? '', // ✅ now type-safe
+        tournament: match.tournament?.name ?? "Unknown Tournament",
         minute: match.status === 'live' ? calculateMatchMinute(match.date) : undefined
       }));
 

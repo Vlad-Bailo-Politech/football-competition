@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Team = require('../models/Team');
+const Tournament = require('../models/Tournament');
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/role');
 const upload = require('../middleware/upload');
@@ -37,7 +38,7 @@ router.post('/users', upload.single('photo'), async (req, res) => {
       role,
       photo: req.file ? `/uploads/${req.file.filename}` : null,
       birthDate: birthDate || null,
-      team: team || null // 👈 якщо не передати, то user без команди
+      team: team || null // якщо не передати, то user без команди
     });
 
     await newUser.save();
@@ -144,19 +145,30 @@ router.put('/users/:id/team', async (req, res) => {
   }
 });
 
-/**
- * GET /api/admin/users
- * Повертає список усіх користувачів (окрім адміну)
- */
-router.get('/users', async (req, res) => {
+// GET /api/admin/users
+router.get("/users", async (req, res) => {
   try {
-    const users = await User.find({ role: { $ne: 'admin' } })
-      .select('-password')
-      .populate('team'); // ⚽ підтягування команди
+    const { role, search } = req.query;
+    const query = {};
+
+    if (role && role !== "all") query.role = role;
+
+    if (search) {
+      query.$or = [
+        { name: new RegExp(search, "i") },
+        { email: new RegExp(search, "i") },
+      ];
+    }
+
+    const users = await User.find(query)
+      .select("-password")
+      .populate("team")
+      .limit(search ? 20 : 0); // ⚡ якщо це автокомпліт – обмежимо
+
     res.json(users);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -164,33 +176,57 @@ router.get('/users', async (req, res) => {
  * PUT /api/admin/users/:id
  * Оновлює name, email, role та за бажанням password
  */
-router.put('/users/:id', async (req, res) => {
-  const { name, email, role, password } = req.body;
-  if (!['organizer', 'coach', 'player', 'referee'].includes(role)) {
-    return res.status(400).json({ message: 'Invalid role' });
-  }
-
+router.put('/users/:id', upload.single('photo'), async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const { name, email, password, role, birthDate, team } = req.body;
+    const updateData = { name, email, role };
+
+    // Якщо пароль передано — хешуємо
+    if (password && password.trim() !== '') {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(password, salt);
     }
 
-    user.name = name;
-    user.email = email;
-    user.role = role;
+    // Якщо дата є — оновлюємо
+    if (birthDate) updateData.birthDate = new Date(birthDate);
 
-    if (password) {
-      user.password = await bcrypt.hash(password, 10);
+    // Якщо команда не пуста — оновлюємо, інакше null
+    updateData.team = team && team !== '' ? team : null;
+
+    // Якщо прийшов новий файл (фото)
+    if (req.file) {
+      updateData.photo = `/uploads/${req.file.filename}`;
     }
 
-    await user.save();
-    const out = user.toObject();
-    delete out.password;
-    res.json(out);
+    // Оновлюємо користувача
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    ).populate('team');
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'Користувача не знайдено' });
+    }
+
+    // --- Додаткова логіка для тренера ---
+    if (role === 'coach') {
+      // 1. Зняти користувача як тренера з усіх інших команд
+      await Team.updateMany(
+        { coach: updatedUser._id },
+        { $set: { coach: null } }
+      );
+
+      // 2. Якщо є вибрана команда — призначити цього користувача тренером
+      if (team) {
+        await Team.findByIdAndUpdate(team, { coach: updatedUser._id });
+      }
+    }
+
+    res.json(updatedUser);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Помилка сервера' });
   }
 });
 
@@ -217,8 +253,11 @@ router.delete('/users/:id', async (req, res) => {
 router.get('/teams', async (req, res) => {
   try {
     const teams = await Team.find()
-      .populate('coach', 'name role photo')
-      .populate('players', 'name role photo');
+      // .populate('coach', 'name role photo')
+      // .populate('players', 'name role photo');
+      .populate('coach', 'name')
+      .populate('players', 'name')
+      .populate('tournament', 'name');
     res.json(teams);
   } catch (err) {
     console.error(err);
@@ -226,42 +265,261 @@ router.get('/teams', async (req, res) => {
   }
 });
 
-// POST /api/admin/teams → створити нову команду
-router.post('/teams', async (req, res) => {
+// POST /api/admin/teams
+router.post('/teams', upload.single('logo'), async (req, res) => {
+  const { name, coach, tournament, players } = req.body;
+
   try {
-    const { name, coach, players } = req.body;
-    const team = new Team({ name, coach, players });
+    if (!name || !coach) {
+      return res.status(400).json({ message: 'Name and coach are required' });
+    }
+
+    // Перевірка тренера
+    const coachUser = await User.findById(coach);
+    if (!coachUser || coachUser.role !== 'coach') {
+      return res.status(400).json({ message: 'Invalid coach' });
+    }
+
+    // Якщо він вже був тренером у якійсь команді → знімаємо
+    if (coachUser.team) {
+      const oldTeam = await Team.findById(coachUser.team);
+      if (oldTeam) {
+        oldTeam.coach = null;
+        await oldTeam.save();
+      }
+    }
+
+    // Логотип (або дефолтний)
+    const logoPath = req.file ? `/uploads/${req.file.filename}` : undefined;
+
+    // Створюємо нову команду
+    const newTeam = new Team({
+      name,
+      logo: logoPath,
+      tournament: tournament || null,
+      coach: coachUser._id,
+      players: players ? (Array.isArray(players) ? players : [players]) : []
+    });
+
+    await newTeam.save();
+
+    // Оновлюємо тренера
+    coachUser.team = newTeam._id;
+    await coachUser.save();
+
+    // Оновлюємо гравців
+    if (players) {
+      const playerIds = Array.isArray(players) ? players : [players];
+      await User.updateMany(
+        { _id: { $in: playerIds }, role: 'player' },
+        { $set: { team: newTeam._id } }
+      );
+    }
+
+    await newTeam.populate('coach', 'name role photo');
+    await newTeam.populate('players', 'name role photo');
+
+    res.status(201).json(newTeam);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+/**
+ * PUT /api/admin/teams/:id
+ * Оновлення даних команди
+ */
+router.put('/teams/:id', upload.single('logo'), async (req, res) => {
+  const { name, coach, tournament, players } = req.body;
+
+  try {
+    const team = await Team.findById(req.params.id);
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    if (name) team.name = name;
+    if (req.file) team.logo = `/uploads/${req.file.filename}`;
+    if (tournament !== undefined) team.tournament = tournament || null;
+
+    // ---- Оновлюємо тренера ----
+    if (coach) {
+      const newCoach = await User.findById(coach);
+      if (!newCoach || newCoach.role !== 'coach') {
+        return res.status(400).json({ message: 'Invalid coach' });
+      }
+
+      // якщо він був у іншій команді → знімаємо
+      if (newCoach.team && newCoach.team.toString() !== team._id.toString()) {
+        const oldTeam = await Team.findById(newCoach.team);
+        if (oldTeam) {
+          oldTeam.coach = null;
+          await oldTeam.save();
+        }
+      }
+
+      team.coach = newCoach._id;
+      newCoach.team = team._id;
+      await newCoach.save();
+    }
+
+    // ---- Оновлюємо гравців ----
+    if (players) {
+      const playerIds = Array.isArray(players) ? players : [players];
+      team.players = [];
+
+      for (const playerId of playerIds) {
+        const player = await User.findById(playerId);
+        if (!player || player.role !== 'player') continue;
+
+        // якщо вже був у іншій команді → знімаємо
+        if (player.team && player.team.toString() !== team._id.toString()) {
+          const oldTeam = await Team.findById(player.team);
+          if (oldTeam) {
+            oldTeam.players = oldTeam.players.filter(
+              (p) => p.toString() !== player._id.toString()
+            );
+            await oldTeam.save();
+          }
+        }
+
+        player.team = team._id;
+        await player.save();
+        team.players.push(player._id);
+      }
+    }
+
     await team.save();
-    await team.populate('coach players');
-    res.status(201).json(team);
+
+    await team.populate('coach', 'name role photo');
+    await team.populate('players', 'name role photo');
+
+    res.json(team);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// PUT /api/admin/teams/:id → оновити команду
-router.put('/teams/:id', async (req, res) => {
-  try {
-    const updated = await Team.findByIdAndUpdate(req.params.id, req.body, { new: true })
-      .populate('coach players');
-    if (!updated) return res.status(404).json({ message: 'Team not found' });
-    res.json(updated);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// DELETE /api/admin/teams/:id → видалити команду
+/**
+ * DELETE /api/admin/teams/:id
+ * Видалення команди
+ */
 router.delete('/teams/:id', async (req, res) => {
   try {
-    const deleted = await Team.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Team not found' });
+    const team = await Team.findById(req.params.id);
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    // Обнуляємо тренера
+    if (team.coach) {
+      await User.findByIdAndUpdate(team.coach, { $set: { team: null } });
+    }
+
+    // Обнуляємо гравців
+    if (team.players.length > 0) {
+      await User.updateMany(
+        { _id: { $in: team.players } },
+        { $set: { team: null } }
+      );
+    }
+
+    await team.deleteOne();
+
     res.json({ message: 'Team deleted' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// пошук гравців
+router.get("/users/search", async (req, res) => {
+  try {
+    const { role, query } = req.query;
+    const filter = {};
+    if (role) filter.role = role;
+    if (query) filter.name = new RegExp(query, "i");
+
+    const users = await User.find(filter).limit(20); // обмежимо 20 результатів
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Помилка пошуку" });
+  }
+});
+
+// ================= TOURNAMENTS =================
+
+// GET all tournaments
+router.get("/tournaments", async (req, res) => {
+  try {
+    const tournaments = await Tournament.find().select("name season location startDate");
+    res.json(tournaments);
+  } catch (err) {
+    res.status(500).json({ message: "Помилка при отриманні турнірів" });
+  }
+});
+
+// GET single tournament
+router.get("/tournaments/:id", async (req, res) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id)
+      .populate("organizer", "name email")
+      .populate("teams", "name");
+    if (!tournament) return res.status(404).json({ message: "Турнір не знайдено" });
+    res.json(tournament);
+  } catch (err) {
+    res.status(500).json({ message: "Помилка при отриманні турніру" });
+  }
+});
+
+// CREATE tournament
+router.post("/tournaments", async (req, res) => {
+  try {
+    const newTournament = new Tournament({
+      name: req.body.name,
+      gender: req.body.gender,
+      season: req.body.season,
+      location: req.body.location,
+      startDate: req.body.startDate,
+      groupStage: req.body.groupStage,
+      groupLegs: req.body.groupLegs,
+      playoff: req.body.playoff,
+      organizer: req.user._id,
+    });
+
+    await newTournament.save();
+    res.status(201).json(newTournament);
+  } catch (err) {
+    res.status(400).json({ message: "Помилка при створенні турніру", error: err.message });
+  }
+});
+
+// UPDATE tournament
+router.put("/tournaments/:id", async (req, res) => {
+  try {
+    const updated = await Tournament.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: "Турнір не знайдено" });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: "Помилка при оновленні турніру", error: err.message });
+  }
+});
+
+// DELETE tournament
+router.delete("/tournaments/:id", async (req, res) => {
+  try {
+    const deleted = await Tournament.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Турнір не знайдено" });
+    res.json({ message: "Турнір видалено" });
+  } catch (err) {
+    res.status(500).json({ message: "Помилка при видаленні турніру" });
   }
 });
 

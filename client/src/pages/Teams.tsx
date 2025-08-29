@@ -9,6 +9,7 @@ import { Users } from 'lucide-react';
 interface Team {
   _id: string;
   name: string;
+  logo?: string; // ✅ додали
   tournament: { name: string };
   players: string[];
 }
@@ -58,7 +59,15 @@ const Teams = () => {
                 >
                   <CardHeader className="pb-4">
                     <div className="flex items-center space-x-3 mb-2">
-                      <div className="text-4xl">⚽</div>
+                      <img
+                          src={
+                            team.logo
+                              ? `http://localhost:5000${team.logo}`
+                              : "http://localhost:5000/uploads/defaults/default-team.png"
+                          }
+                          alt={team.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
                       <div>
                         <CardTitle className="text-xl group-hover:text-football-green transition-colors">
                           {team.name}
