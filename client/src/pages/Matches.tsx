@@ -5,22 +5,25 @@ import Footer from '@/components/Footer';
 import MatchCard from '@/components/MatchCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+// спільний тип статусу
+export type MatchStatus = 'upcoming' | 'live' | 'finished';
+
 interface MatchFromServer {
   _id: string;
-  teamA: { _id: string; name: string } | null;
-  teamB: { _id: string; name: string } | null;
+  homeTeam: { _id: string; name: string } | null;
+  awayTeam: { _id: string; name: string } | null;
   tournament: { _id: string; name: string };
   date: string;
-  status: 'scheduled' | 'live' | 'finished';
-  score: { teamA: number | null; teamB: number | null };
+  status: 'upcoming' | 'active' | 'finished'; // від сервера
+  score: { home: number; away: number };
   location?: string;
 }
 
 interface Match {
   id: string;
-  homeTeam: { id: string; name: string; score: number | null };
-  awayTeam: { id: string; name: string; score: number | null };
-  status: 'live' | 'finished' | 'upcoming';
+  homeTeam: { id: string; name: string; score: number };
+  awayTeam: { id: string; name: string; score: number };
+  status: MatchStatus; // використання спільного типу
   startTime: string;
   venue: string;
   tournament: string;
@@ -38,24 +41,25 @@ const Matches = () => {
 
   const fetchMatches = async () => {
     try {
-      const res = await axios.get<MatchFromServer[]>('http://localhost:5000/api/public/all-matches');
+      const res = await axios.get<MatchFromServer[]>('http://localhost:5000/api/public/matches');
       const transformedMatches = res.data.map((match): Match => ({
         id: match._id,
         homeTeam: {
-          id: match.teamA?._id ?? "unknown",
-          name: match.teamA?.name ?? "unknown",
-          score: match.score.teamA
+          id: match.homeTeam?._id ?? "unknown",
+          name: match.homeTeam?.name ?? "Unknown",
+          score: match.score.home
         },
         awayTeam: {
-          id: match.teamB?._id ?? "unknown",
-          name: match.teamB?.name ?? "unknown",
-          score: match.score.teamB
+          id: match.awayTeam?._id ?? "unknown",
+          name: match.awayTeam?.name ?? "Unknown",
+          score: match.score.away
         },
-        status: match.status === 'scheduled' ? 'upcoming' : match.status as 'live' | 'finished' | 'upcoming',
+        // перетворюємо "active" з сервера у "live"
+        status: match.status === 'active' ? 'live' : match.status,
         startTime: match.date,
-        venue: match.location ?? '', // ✅ now type-safe
+        venue: match.location ?? '',
         tournament: match.tournament?.name ?? "Unknown Tournament",
-        minute: match.status === 'live' ? calculateMatchMinute(match.date) : undefined
+        minute: match.status === 'active' ? calculateMatchMinute(match.date) : undefined
       }));
 
       setMatches(transformedMatches);

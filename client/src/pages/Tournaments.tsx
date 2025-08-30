@@ -15,7 +15,7 @@ const Tournaments = () => {
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/public/tournaments'); // Повний шлях
+        const response = await axios.get('http://localhost:5000/api/public/tournaments');
         console.log(response.data);
 
         if (Array.isArray(response.data)) {
@@ -74,7 +74,7 @@ const Tournaments = () => {
                 <Card
                   key={tournament._id}
                   className="football-card cursor-pointer group"
-                  // onClick={() => handleTournamentClick(tournament._id)}
+                  onClick={() => handleTournamentClick(tournament._id)}
                 >
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">

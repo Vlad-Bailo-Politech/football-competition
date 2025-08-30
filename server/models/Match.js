@@ -2,15 +2,23 @@ const mongoose = require('mongoose');
 
 const matchSchema = new mongoose.Schema({
   tournament: { type: mongoose.Schema.Types.ObjectId, ref: 'Tournament', required: true },
-  teamA:      { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
-  teamB:      { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
-  date:       { type: Date, required: true },
-  location:   { type: String },
-  status:     { type: String, enum: ['scheduled','live','finished'], default: 'scheduled' },
+  homeTeam: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
+  awayTeam: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
+  
+  date: { type: Date, required: true }, // дата матчу
+  location: { type: String, default: null },
+  status: { 
+    type: String, 
+    enum: ['upcoming', 'finished', 'active'], 
+    default: 'upcoming' 
+  },
+
+  // результат
   score: {
-    teamA: { type: Number, default: null },
-    teamB: { type: Number, default: null }
-  }
+    home: { type: Number, default: 0 },
+    away: { type: Number, default: 0 }
+  },
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Match', matchSchema);

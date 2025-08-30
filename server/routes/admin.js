@@ -38,7 +38,7 @@ router.post('/users', upload.single('photo'), async (req, res) => {
       role,
       photo: req.file ? `/uploads/${req.file.filename}` : null,
       birthDate: birthDate || null,
-      team: team || null // якщо не передати, то user без команди
+      team: team || null
     });
 
     await newUser.save();
@@ -49,7 +49,15 @@ router.post('/users', upload.single('photo'), async (req, res) => {
       if (foundTeam) {
         if (role === 'player') {
           foundTeam.players.push(newUser._id);
-        } else if (role === 'coach' && !foundTeam.coach) {
+        } else if (role === 'coach') {
+          // Якщо вже є тренер → замінюємо його
+          if (foundTeam.coach && foundTeam.coach.toString() !== newUser._id.toString()) {
+            const oldCoach = await User.findById(foundTeam.coach);
+            if (oldCoach) {
+              oldCoach.team = null;
+              await oldCoach.save();
+            }
+          }
           foundTeam.coach = newUser._id;
         }
         await foundTeam.save();
@@ -115,8 +123,13 @@ router.put('/users/:id/team', async (req, res) => {
           newTeam.players.push(user._id);
         }
       } else if (user.role === 'coach') {
+        // Якщо вже є тренер → замінюємо його
         if (newTeam.coach && newTeam.coach.toString() !== user._id.toString()) {
-          return res.status(400).json({ message: 'This team already has a coach' });
+          const oldCoach = await User.findById(newTeam.coach);
+          if (oldCoach) {
+            oldCoach.team = null;
+            await oldCoach.save();
+          }
         }
         newTeam.coach = user._id;
       }
@@ -149,9 +162,13 @@ router.put('/users/:id/team', async (req, res) => {
 router.get("/users", async (req, res) => {
   try {
     const { role, search } = req.query;
-    const query = {};
+    const query = {
+      role: { $ne: "admin" }
+    };
 
-    if (role && role !== "all") query.role = role;
+    if (role && role !== "all") {
+      query.role = role;
+    }
 
     if (search) {
       query.$or = [

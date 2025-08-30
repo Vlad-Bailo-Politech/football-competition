@@ -86,7 +86,7 @@ const Header = () => {
 
           {/* Language Switcher & User Buttons */}
           <div className="flex items-center space-x-4">
-            <DropdownMenu>
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center space-x-2">
                   <Globe className="w-4 h-4" />
@@ -101,7 +101,7 @@ const Header = () => {
                   English
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
 
             {currentUser ? (
               <>

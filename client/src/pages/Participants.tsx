@@ -79,7 +79,7 @@ const Participants = () => {
                   <Card
                     key={player._id}
                     className="football-card cursor-pointer group"
-                    onClick={() => handleParticipantClick('players', player._id)}
+                    //onClick={() => handleParticipantClick('players', player._id)}
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-3">
@@ -124,7 +124,7 @@ const Participants = () => {
                   <Card
                     key={coach._id}
                     className="football-card cursor-pointer group"
-                    onClick={() => handleParticipantClick('coaches', coach._id)}
+                    //onClick={() => handleParticipantClick('coaches', coach._id)}
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-3">
@@ -169,7 +169,7 @@ const Participants = () => {
                   <Card
                     key={referee._id}
                     className="football-card cursor-pointer group"
-                    onClick={() => handleParticipantClick('referees', referee._id)}
+                    //onClick={() => handleParticipantClick('referees', referee._id)}
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-3">
